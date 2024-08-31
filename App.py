@@ -2,42 +2,69 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Dados de exemplo
+# Ativar o layout amplo no início
+st.set_page_config(layout="wide")
+
+# Estilo CSS customizado para remover margens (opcional)
+st.markdown("""
+    <style>
+        .css-18e3th9 { padding: 0px 0px; }
+        .css-1d391kg { padding: 0px; }
+        .css-1dbjc4n { padding: 0px 0px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Dados de horas trabalhadas (exemplo)
 data = {
-    'Funcionário-ID': [1, 2, 3, 1, 2],
-    'horasTrabalhoExcel': [1, 2, 3, 1, 1],
-    'Dia': [1, 2, 3, 4, 5],
-    'TipoCliente': ['Inadimplentes', 'Oportunidade', 'Ausente', '', ''],
-    'TotalClientes': [50, 30, 10, None, None],
-    'TempoDeEnvio': [None, None, None, None, None]
+    'Funcionário': ['Funcionário 1', 'Funcionário 2', 'Funcionário 3'],
+    'Horas Antes': [40, 35, 40],  # Horas por semana
+    'Horas Depois': [10, 8, 10],  # Horas por semana após automação
 }
 
 df = pd.DataFrame(data)
 
-# Preencher valores ausentes com 0 para simplificação
-df['TotalClientes'].fillna(0, inplace=True)
+# Cálculos de redução
+df['Horas Economizadas'] = df['Horas Antes'] - df['Horas Depois']
+df['Redução (%)'] = (df['Horas Economizadas'] / df['Horas Antes']) * 100
 
-# Calcular o tempo total gasto
-tempo_total = df.groupby('TipoCliente')['TotalClientes'].sum()
+# Título do Dashboard
+st.title('Redução de Trabalho com Automação de WhatsApp')
 
-# Tempo total gasto por dia
-tempo_por_dia = df.groupby('Dia')['horasTrabalhoExcel'].sum()
+# Criação das colunas com nova proporção
+col1, col2 = st.columns([1, 2])  # Aumentar o tamanho da tabela
 
-# Tempo total gasto por funcionário
-tempo_por_funcionario = df.groupby('Funcionário-ID')['horasTrabalhoExcel'].sum()
+# Gráfico de barras na primeira coluna (menor)
+st.subheader('Comparação de Horas Trabalhadas por Funcionário')
+fig, ax = plt.subplots(figsize=(12, 6))  # Ajustar o tamanho do gráfico
+bar_width = 0.35
+index = df.index
 
-# Streamlit app
-st.title('Dashboard de Tempo de Envio de Mensagens')
+ax.bar(index, df['Horas Antes'], bar_width, label='Antes da Automação', color='skyblue')
+ax.bar(index + bar_width, df['Horas Depois'], bar_width, label='Depois da Automação', color='lightgreen')
 
-st.header('Tempo Gasto por Tipo de Cliente')
-st.bar_chart(tempo_total)
+ax.set_xlabel('Funcionários')
+ax.set_ylabel('Horas por Semana')
+ax.set_title('Horas Trabalhadas Antes e Depois da Automação')
+ax.set_xticks(index + bar_width / 2)
+ax.set_xticklabels(df['Funcionário'])
+ax.legend()
 
-st.header('Tempo Gasto por Dia Útil')
-st.line_chart(tempo_por_dia)
+st.pyplot(fig)
 
-st.header('Tempo Gasto por Funcionário')
-st.bar_chart(tempo_por_funcionario)
+# Tabela na segunda coluna (maior)
 
-# Gráficos adicionais
-st.write('Gráficos adicionais e insights podem ser adicionados aqui.')
+st.subheader('Detalhamento por Funcionário')
+st.table(df[['Funcionário', 'Horas Antes', 'Horas Depois', 'Horas Economizadas', 'Redução (%)']])
 
+# Métricas de resumo abaixo
+st.subheader('Resumo da Redução de Trabalho')
+total_horas_antes = df['Horas Antes'].sum()
+total_horas_depois = df['Horas Depois'].sum()
+total_horas_economizadas = df['Horas Economizadas'].sum()
+percentual_reducao = (total_horas_economizadas / total_horas_antes) * 100
+
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Total Horas Antes", f"{total_horas_antes}h")
+col2.metric("Total Horas Depois", f"{total_horas_depois}h")
+col3.metric("Horas Economizadas", f"{total_horas_economizadas}h")
+col4.metric("Redução Total", f"{percentual_reducao:.2f}%")
